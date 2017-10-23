@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+fail() {
+	echo ${1} >&2
+	exit 1
+}
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		ssh) USER=${2} ; shift 2;;
+		*) fail "USAGE: invalid flag '$1'"; exit 1 ;;
+	esac
+done
+
+echo "Removing current .ssh profile..."
+unlink ~/.ssh
+echo "Attaching to .ssh profile for user ${USER}..."
+ln -s ~/ssh/${USER} ~/.ssh
+echo "Now using .ssh profile for user ${USER}"
