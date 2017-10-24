@@ -15,6 +15,9 @@ create_profile() {
 	if [[ ${CHECK} == ${USER} ]]; then
 		fail "User '${USER}' already exists."
 	fi
+	if [[ ${USER} == "whoami" ]]; then
+		fail "Cannot create a user named 'whoami'"
+	fi
 	echo "Creating profile directory in '${HOME}/ssh'"
 	mkdir -p ${HOME}/ssh/${USER}
 	chmod 700 ${HOME}/ssh/${USER}
