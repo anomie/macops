@@ -13,8 +13,14 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+if [[ ${USER} -eq "whoami" ]]; then
+	WHO=$(ls -ld ${HOME}/.ssh | cut -d'/' -f8)
+	echo "Currently using .ssh profile for user '${WHO}'"
+	exit 0
+fi
+
 echo "Removing current .ssh profile..."
-unlink ~/.ssh
-echo "Attaching to .ssh profile for user ${USER}..."
-ln -s ~/ssh/${USER} ~/.ssh
-echo "Now using .ssh profile for user ${USER}"
+unlink ${HOME}/.ssh
+echo "Attaching to .ssh profile for user '${USER}'..."
+ln -s ${HOME}/ssh/${USER} ${HOME}/.ssh
+echo "Now using .ssh profile for user '${USER}'"
