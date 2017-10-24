@@ -6,7 +6,7 @@ fail() {
 }
 
 current_user() {
-	ls -ld ${HOME}/.ssh | cut -d'/' -f8
+	basename $(readlink ${HOME}/.ssh)
 }
 
 create_profile() {
