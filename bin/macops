@@ -1,26 +1,54 @@
 #!/bin/bash
 
-set -e
-
 fail() {
 	echo ${1} >&2
 	exit 1
 }
+
+current_user() {
+	ls -ld ${HOME}/.ssh | cut -d'/' -f8
+}
+
+create_profile() {
+	USER=${1}
+	CHECK=$(ls -a ${HOME}/ssh | grep "\<${USER}\>")
+	if [[ ${CHECK} == ${USER} ]]; then
+		fail "User '${USER}' already exists."
+	fi
+	echo "Creating profile directory in '${HOME}/ssh'"
+	mkdir -p ${HOME}/ssh/${USER}
+	chmod 700 ${HOME}/ssh/${USER}
+	echo "Generating 4096 RSA key for '${USER}'..."
+	ssh-keygen -t rsa -b 4096 -C "${USER} profile key" -P "" -f "${HOME}/ssh/${USER}/id_rsa" -q
+	echo "Switching to new user profile for '${USER}'..."
+	switch_profile ${USER}
+	echo "Done."
+}
+
+switch_profile() {
+	USER=${1}
+	if [[ "$(current_user)" -eq "${USER}" ]]; then
+		echo "You are currently using '${USER}'."
+		exit 0
+	fi
+
+	echo "Switching profile from '$(current_user)' to '${USER}'..."
+	unlink ${HOME}/.ssh
+	echo "Attaching to .ssh profile for user '${USER}'..."
+	ln -s ${HOME}/ssh/${USER} ${HOME}/.ssh
+	echo "Now using .ssh profile for user '${USER}'."
+}
+
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-		ssh) USER=${2} ; shift 2;;
-		*) fail "USAGE: invalid flag '$1'"; exit 1 ;;
+	case "${1}" in
+		ssh) 
+			case "${2}" in
+				whoami) echo "Currently using .ssh profile for user '$(current_user)'." ; exit 0;;
+				create) create_profile ${3} ; exit 0;;
+				*) switch_profile ${2} ; exit 0;;
+			esac
+			;;
+		*) fail "USAGE: invalid flag '${1}'"; exit 1 ;;
 	esac
 done
 
-if [[ ${USER} -eq "whoami" ]]; then
-	WHO=$(ls -ld ${HOME}/.ssh | cut -d'/' -f8)
-	echo "Currently using .ssh profile for user '${WHO}'"
-	exit 0
-fi
-
-echo "Removing current .ssh profile..."
-unlink ${HOME}/.ssh
-echo "Attaching to .ssh profile for user '${USER}'..."
-ln -s ${HOME}/ssh/${USER} ${HOME}/.ssh
-echo "Now using .ssh profile for user '${USER}'"
